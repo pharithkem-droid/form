@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="km">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Patient Safety Incident Tool</title>
+<style>
+:root{--primary:#0f766e;--primary2:#115e59;--bg:#f3f6f8;--card:#fff;--text:#17212b;--muted:#667085;--border:#d9e1e7;--danger:#b42318;--warn:#b54708;--ok:#027a48;--shadow:0 2px 10px #0000000b}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Khmer",Arial,sans-serif;font-size:15px}
+header{position:sticky;top:0;z-index:20;background:var(--primary);color:#fff;padding:12px 14px;box-shadow:0 2px 8px #0002}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.title{font-size:18px;font-weight:750}.subtitle{font-size:11px;opacity:.85}
+button,.btn{border:0;border-radius:9px;padding:10px 13px;font-weight:650;cursor:pointer;font-size:14px}.lang{background:#ffffff1c;color:#fff;border:1px solid #ffffff55}
+nav{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:61px;z-index:19}
+nav button{flex:1;background:#fff;color:var(--muted);border-radius:0;padding:12px 6px;border-bottom:3px solid transparent}nav button.active{color:var(--primary);border-bottom-color:var(--primary)}
+main{max-width:920px;margin:auto;padding:14px 12px 80px}.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
+h2{font-size:17px;margin:0 0 13px}h3{font-size:15px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}.field label{display:block;font-weight:650;margin-bottom:5px}.req{color:var(--danger)}
+input,select,textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:10px;background:#fff;color:var(--text);font:inherit}textarea{min-height:88px;resize:vertical}input:focus,select:focus,textarea:focus{outline:2px solid #0f766e33;border-color:var(--primary)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.primary{background:var(--primary);color:#fff}.secondary{background:#e8f1f0;color:var(--primary2)}.danger{background:#fef3f2;color:var(--danger)}
+.status{padding:9px 11px;border-radius:9px;margin-bottom:12px;background:#eef4f4;color:#344054;font-size:13px}.status.ok{background:#ecfdf3;color:var(--ok)}.status.warn{background:#fffaeb;color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.kpi{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}.kpi .n{font-size:24px;font-weight:800}.kpi .l{font-size:12px;color:var(--muted)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:9px}.filters .full{grid-column:1/-1}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}table{border-collapse:collapse;width:100%;min-width:720px;background:#fff}th,td{padding:9px;border-bottom:1px solid var(--border);text-align:left;font-size:12px;vertical-align:top}th{background:#f8fafb;position:sticky;top:0}.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700}.b-low{background:#ecfdf3;color:#027a48}.b-mod{background:#fffaeb;color:#b54708}.b-high{background:#fff4ed;color:#c4320a}.b-critical{background:#fef3f2;color:#b42318}
+.hidden{display:none!important}.small{font-size:12px;color:var(--muted)}.check{display:flex;gap:8px;align-items:flex-start}.check input{width:auto;margin-top:4px}.footer-note{font-size:11px;color:var(--muted);text-align:center;margin-top:15px}
+@media(min-width:650px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:repeat(3,1fr)}.kpis{grid-template-columns:repeat(4,1fr)}.filters{grid-template-columns:repeat(4,1fr)}.filters .full{grid-column:auto}}
+@media print{header,nav,.no-print,.actions,.filters,.footer-note{display:none!important}body{background:#fff}.card{box-shadow:none;border:0}.table-wrap{overflow:visible;border:0}table{min-width:0;font-size:10px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <div><div class="title" id="appTitle">ប្រព័ន្ធរាយការណ៍ហេតុការណ៍សុវត្ថិភាពអ្នកជំងឺ</div><div class="subtitle">Patient Safety Incident Reporting Tool</div></div>
+    <button class="lang" id="langBtn" onclick="toggleLang()">English</button>
+  </div>
+</header>
+<nav>
+  <button id="tabForm" class="active" onclick="showTab('form')">រាយការណ៍</button>
+  <button id="tabDash" onclick="showTab('dash')">ផ្ទាំងគ្រប់គ្រង</button>
+</nav>
+
+<main>
+<section id="formTab">
+  <div id="syncStatus" class="status"></div>
+  <form id="incidentForm" onsubmit="saveIncident(event)">
+    <div class="card">
+      <h2 data-km="ព័ត៌មានទូទៅ" data-en="General information">ព័ត៌មានទូទៅ</h2>
+      <div class="grid two">
+        <div class="field"><label data-km="កាលបរិច្ឆេទកើតហេតុ" data-en="Incident date">កាលបរិច្ឆេទកើតហេតុ <span class="req">*</span></label><input id="incidentDate" type="date" required></div>
+        <div class="field"><label data-km="ម៉ោងកើតហេតុ" data-en="Incident time">ម៉ោងកើតហេតុ</label><input id="incidentTime" type="time"></div>
+        <div class="field"><label data-km="ផ្នែក/វួដ" data-en="Ward / Department">ផ្នែក/វួដ <span class="req">*</span></label>
+          <select id="ward" required><option value="">-- ជ្រើសរើស --</option><option>Emergency</option><option>OPD</option><option>IPD</option><option>ICU</option><option>Operating Theatre</option><option>Pharmacy</option><option>Laboratory</option><option>Radiology</option><option>Maternity</option><option>Pediatrics</option><option>Other</option></select>
+        </div>
+        <div class="field"><label data-km="ទីតាំង/បន្ទប់" data-en="Location / Room">ទីតាំង/បន្ទប់</label><input id="location" type="text"></div>
+        <div class="field"><label data-km="លេខកូដអ្នកជំងឺ" data-en="Patient ID / Hospital No.">លេខកូដអ្នកជំងឺ</label><input id="patientId" type="text" autocomplete="off"><div class="small" data-km="ជៀសវាងបញ្ចូលឈ្មោះអ្នកជំងឺ ប្រសិនបើមិនចាំបាច់" data-en="Avoid patient names unless necessary">ជៀសវាងបញ្ចូលឈ្មោះអ្នកជំងឺ ប្រសិនបើមិនចាំបាច់</div></div>
+        <div class="field"><label data-km="អាយុ" data-en="Age">អាយុ</label><input id="age" type="number" min="0" max="130"></div>
+        <div class="field"><label data-km="ភេទ" data-en="Sex">ភេទ</label><select id="sex"><option value="">--</option><option>Male</option><option>Female</option><option>Other/Unknown</option></select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-km="ព័ត៌មានអំពីហេតុការណ៍" data-en="Incident details">ព័ត៌មានអំពីហេតុការណ៍</h2>
+      <div class="grid two">
+        <div class="field"><label data-km="ប្រភេទហេតុការណ៍" data-en="Incident type">ប្រភេទហេតុការណ៍ <span class="req">*</span></label>
+          <select id="incidentType" required><option value="">-- ជ្រើសរើស --</option><option>Medication / ឱសថ</option><option>Patient identification / កំណត់អត្តសញ្ញាណអ្នកជំងឺ</option><option>Fall / ដួល</option><option>Infection prevention / ការបង្ការការឆ្លង</option><option>Procedure / នីតិវិធី</option><option>Diagnosis / ការធ្វើរោគវិនិច្ឆ័យ</option><option>Blood / Transfusion / ឈាម</option><option>Equipment / ឧបករណ៍</option><option>Laboratory / មន្ទីរពិសោធន៍</option><option>Communication / ការទំនាក់ទំនង</option><option>Pressure injury / ដំបៅសម្ពាធ</option><option>Other / ផ្សេងៗ</option></select>
+        </div>
+        <div class="field"><label data-km="កម្រិតផលប៉ះពាល់" data-en="Severity / Harm level">កម្រិតផលប៉ះពាល់ <span class="req">*</span></label>
+          <select id="severity" required><option value="">-- ជ្រើសរើស --</option><option value="No harm">No harm / គ្មានផលប៉ះពាល់</option><option value="Mild">Mild / ស្រាល</option><option value="Moderate">Moderate / មធ្យម</option><option value="Severe">Severe / ធ្ងន់</option><option value="Death">Death / ស្លាប់</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px"><label data-km="ពិពណ៌នាហេតុការណ៍" data-en="Incident description">ពិពណ៌នាហេតុការណ៍ <span class="req">*</span></label><textarea id="description" required placeholder="អ្វីបានកើតឡើង?"></textarea></div>
+      <div class="field" style="margin-top:12px"><label data-km="សកម្មភាពភ្លាមៗដែលបានអនុវត្ត" data-en="Immediate action taken">សកម្មភាពភ្លាមៗដែលបានអនុវត្ត</label><textarea id="immediateAction"></textarea></div>
+      <div class="field" style="margin-top:12px"><label data-km="កត្តារួមចំណែក/មូលហេតុដែលសង្ស័យ" data-en="Contributing factors / suspected causes">កត្តារួមចំណែក/មូលហេតុដែលសង្ស័យ</label><textarea id="factors"></textarea></div>
+    </div>
+
+    <div class="card">
+      <h2 data-km="ព័ត៌មានអ្នករាយការណ៍" data-en="Reporter information">ព័ត៌មានអ្នករាយការណ៍</h2>
+      <div class="grid two">
+        <div class="field"><label data-km="ឈ្មោះ/លេខសម្គាល់អ្នករាយការណ៍" data-en="Reporter name / ID">ឈ្មោះ/លេខសម្គាល់អ្នករាយការណ៍ <span class="req">*</span></label><input id="reporter" required></div>
+        <div class="field"><label data-km="មុខងារ" data-en="Role / Position">មុខងារ</label><input id="reporterRole"></div>
+      </div>
+      <div class="check" style="margin-top:12px"><input id="anonymous" type="checkbox"><label for="anonymous" data-km="រាយការណ៍ដោយមិនបង្ហាញអត្តសញ្ញាណ" data-en="Submit anonymously">រាយការណ៍ដោយមិនបង្ហាញអត្តសញ្ញាណ</label></div>
+    </div>
+
+    <div class="card no-print">
+      <div class="actions"><button class="primary" type="submit" data-km="រក្សាទុករបាយការណ៍" data-en="Save incident">រក្សាទុករបាយការណ៍</button><button class="secondary" type="button" onclick="clearForm()" data-km="សម្អាត" data-en="Clear">សម្អាត</button></div>
+      <div class="small" style="margin-top:9px" data-km="ទិន្នន័យត្រូវបានរក្សាទុកក្នុងឧបករណ៍នេះ ហើយនឹងព្យាយាមផ្ញើទៅម៉ាស៊ីនមេនៅពេលមានអ៊ីនធឺណិត។" data-en="Data is saved on this device and will retry sending when internet is available.">ទិន្នន័យត្រូវបានរក្សាទុកក្នុងឧបករណ៍នេះ ហើយនឹងព្យាយាមផ្ញើទៅម៉ាស៊ីនមេនៅពេលមានអ៊ីនធឺណិត។</div>
+    </div>
+  </form>
+</section>
+
+<section id="dashTab" class="hidden">
+  <div class="card no-print">
+    <h2 data-km="ផ្ទាំងគ្រប់គ្រង" data-en="Dashboard">ផ្ទាំងគ្រប់គ្រង</h2>
+    <div class="filters">
+      <div><label data-km="ចាប់ពី" data-en="From">ចាប់ពី</label><input id="fromDate" type="date" onchange="renderDashboard()"></div>
+      <div><label data-km="ដល់" data-en="To">ដល់</label><input id="toDate" type="date" onchange="renderDashboard()"></div>
+      <div><label data-km="ផ្នែក/វួដ" data-en="Ward">ផ្នែក/វួដ</label><select id="filterWard" onchange="renderDashboard()"><option value="">All / ទាំងអស់</option></select></div>
+      <div class="actions" style="align-items:end"><button class="secondary" onclick="exportExcel()" data-km="នាំចេញ Excel" data-en="Export Excel">នាំចេញ Excel</button><button class="secondary" onclick="window.print()" data-km="បោះពុម្ព/PDF" data-en="Print / PDF">បោះពុម្ព/PDF</button></div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kTotal">0</div><div class="l" data-km="សរុប" data-en="Total">សរុប</div></div>
+    <div class="kpi"><div class="n" id="kSevere">0</div><div class="l" data-km="ធ្ងន់/ស្លាប់" data-en="Severe / Death">ធ្ងន់/ស្លាប់</div></div>
+    <div class="kpi"><div class="n" id="kPending">0</div><div class="l" data-km="រង់ចាំផ្ញើ" data-en="Pending sync">រង់ចាំផ្ញើ</div></div>
+    <div class="kpi"><div class="n" id="kToday">0</div><div class="l" data-km="ថ្ងៃនេះ" data-en="Today">ថ្ងៃនេះ</div></div>
+  </div>
+  <div class="card" style="margin-top:13px">
+    <h2 data-km="បញ្ជីហេតុការណ៍" data-en="Incident list">បញ្ជីហេតុការណ៍</h2>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Ward</th><th>Type</th><th>Severity</th><th>Reporter</th><th>Sync</th></tr></thead><tbody id="incidentRows"></tbody></table></div>
+  </div>
+</section>
+<div class="footer-note">Patient Safety Incident Tool • Offline-first • Local storage + Google Apps Script</div>
+</main>
+
+<script>
+/* ===================== CONFIGURATION =====================
+   Replace this with your deployed Google Apps Script Web App URL.
+   Example: https://script.google.com/macros/s/XXXXXXXX/exec
+   The tool sends each incident as URL query parameters using GET.
+=========================================================== */
+const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyivSYlrWMWvA4hUye9pMq3bU2PDQWrolk6uDblvmNU9my8qDCvRbwwQ9OiRPdkvATn/exec";
+const STORAGE_KEY = "patient_safety_incidents_v1";
+const QUEUE_KEY = "patient_safety_pending_v1";
+
+let lang = "km";
+
+const $ = id => document.getElementById(id);
+const today = () => new Date().toISOString().slice(0,10);
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function getData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return[]}}
+function setData(a){localStorage.setItem(STORAGE_KEY,JSON.stringify(a))}
+function getQueue(){try{return JSON.parse(localStorage.getItem(QUEUE_KEY)||"[]")}catch{return[]}}
+function setQueue(a){localStorage.setItem(QUEUE_KEY,JSON.stringify(a))}
+
+function collectForm(){
+  return {
+    id:"PSI-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),
+    incidentDate:$("incidentDate").value, incidentTime:$("incidentTime").value,
+    ward:$("ward").value, location:$("location").value, patientId:$("patientId").value,
+    age:$("age").value, sex:$("sex").value, incidentType:$("incidentType").value,
+    severity:$("severity").value, description:$("description").value,
+    immediateAction:$("immediateAction").value, factors:$("factors").value,
+    reporter:$("anonymous").checked?"ANONYMOUS":$("reporter").value,
+    reporterRole:$("reporterRole").value, anonymous:$("anonymous").checked,
+    createdAt:new Date().toISOString(), synced:false
+  };
+}
+
+async function saveIncident(e){
+  e.preventDefault();
+  if(!$("incidentForm").reportValidity()) return;
+  const item=collectForm();
+  const all=getData(); all.push(item); setData(all);
+  const q=getQueue(); q.push(item); setQueue(q);
+  clearForm(false);
+  updateStatus(t("រក្សាទុកបានជោគជ័យ។ ប្រព័ន្ធនឹងព្យាយាមផ្ញើទិន្នន័យដោយស្វ័យប្រវត្តិ។","Saved successfully. The system will retry sending automatically."));
+  renderDashboard();
+  syncQueue();
+}
+
+function clearForm(reset=true){
+  $("incidentForm").reset();
+  $("incidentDate").value=today();
+  if(reset) updateStatus(t("ទម្រង់ត្រូវបានសម្អាត។","Form cleared."));
+}
+
+function updateStatus(msg,type=""){
+  $("syncStatus").textContent=msg;
+  $("syncStatus").className="status "+type;
+}
+
+async function syncQueue(){
+  const q=getQueue();
+  if(!q.length){updateStatus(t("គ្មានទិន្នន័យរង់ចាំផ្ញើ។","No pending data."),"ok");return}
+  if(!navigator.onLine){updateStatus(t("Offline: ទិន្នន័យត្រូវបានរក្សាទុកក្នុងឧបករណ៍។","Offline: data is safely stored on this device."),"warn");return}
+  if(GOOGLE_APPS_SCRIPT_URL.includes("PASTE_YOUR")){
+    updateStatus(t("សូមដាក់ Google Apps Script URL នៅក្នុង GOOGLE_APPS_SCRIPT_URL។","Add your Google Apps Script URL to GOOGLE_APPS_SCRIPT_URL."),"warn");return;
+  }
+  const remaining=[];
+  for(const item of q){
+    try{
+      const params=new URLSearchParams();
+      Object.entries(item).forEach(([k,v])=>params.set(k,String(v??"")));
+      const url=GOOGLE_APPS_SCRIPT_URL+"?"+params.toString();
+      await fetch(url,{method:"GET",mode:"no-cors",cache:"no-store"});
+      markSynced(item.id);
+    }catch(err){remaining.push(item)}
+  }
+  setQueue(remaining);
+  updateStatus(remaining.length
+    ? t(remaining.length+" ករណីនៅរង់ចាំផ្ញើ។",""+remaining.length+" incident(s) remain pending sync.")
+    : t("បានផ្ញើទិន្នន័យដែលរង់ចាំរួចរាល់។","All pending incidents have been sent."),"ok");
+  renderDashboard();
+}
+
+function markSynced(id){
+  const a=getData().map(x=>x.id===id?({...x,synced:true,syncedAt:new Date().toISOString()}):x);setData(a);
+}
+window.addEventListener("online",syncQueue);
+window.addEventListener("offline",()=>updateStatus(t("គ្មានអ៊ីនធឺណិត — ទិន្នន័យថ្មីនឹងរក្សាទុកក្នុងឧបករណ៍។","Offline — new data will be stored on this device."),"warn"));
+
+function showTab(tab){
+  $("formTab").classList.toggle("hidden",tab!=="form");$("dashTab").classList.toggle("hidden",tab!=="dash");
+  $("tabForm").classList.toggle("active",tab==="form");$("tabDash").classList.toggle("active",tab==="dash");
+  if(tab==="dash")renderDashboard();
+}
+
+function severityClass(s){return s==="Death"?"b-critical":s==="Severe"?"b-high":s==="Moderate"?"b-mod":"b-low"}
+
+function filtered(){
+  const from=$("fromDate").value,to=$("toDate").value,w=$("filterWard").value;
+  return getData().filter(x=>(!from||x.incidentDate>=from)&&(!to||x.incidentDate<=to)&&(!w||x.ward===w)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+function renderDashboard(){
+  const all=getData();
+  const wards=[...new Set(all.map(x=>x.ward).filter(Boolean))].sort();
+  const current=$("filterWard").value;
+  $("filterWard").innerHTML='<option value="">All / ទាំងអស់</option>'+wards.map(w=>`<option>${esc(w)}</option>`).join("");
+  $("filterWard").value=wards.includes(current)?current:"";
+  const a=filtered();
+  $("kTotal").textContent=a.length;
+  $("kSevere").textContent=a.filter(x=>x.severity==="Severe"||x.severity==="Death").length;
+  $("kPending").textContent=getQueue().length;
+  $("kToday").textContent=a.filter(x=>x.incidentDate===today()).length;
+  $("incidentRows").innerHTML=a.map(x=>`<tr>
+    <td>${esc(x.incidentDate)} ${esc(x.incidentTime)}</td><td>${esc(x.ward)}</td><td>${esc(x.incidentType)}</td>
+    <td><span class="badge ${severityClass(x.severity)}">${esc(x.severity)}</span></td>
+    <td>${esc(x.reporter)}</td><td>${x.synced?"✓ Sent":"Pending"}</td></tr>`).join("")||'<tr><td colspan="6">No records</td></tr>';
+}
+
+function exportExcel(){
+  const data=filtered();
+  if(!data.length){alert(t("គ្មានទិន្នន័យសម្រាប់នាំចេញ។","No data to export."));return}
+  if(typeof XLSX==="undefined"){exportCSV(data);return}
+  const rows=data.map(x=>({"ID":x.id,"Incident Date":x.incidentDate,"Incident Time":x.incidentTime,"Ward":x.ward,"Location":x.location,"Patient ID":x.patientId,"Age":x.age,"Sex":x.sex,"Incident Type":x.incidentType,"Severity":x.severity,"Description":x.description,"Immediate Action":x.immediateAction,"Contributing Factors":x.factors,"Reporter":x.reporter,"Reporter Role":x.reporterRole,"Created At":x.createdAt,"Synced":x.synced?"Yes":"No"}));
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Incidents");
+  XLSX.writeFile(wb,"patient_safety_incidents_"+today()+".xlsx");
+}
+function exportCSV(data){
+  const keys=["id","incidentDate","incidentTime","ward","location","patientId","age","sex","incidentType","severity","description","immediateAction","factors","reporter","reporterRole","createdAt","synced"];
+  const csv=[keys.join(","),...data.map(x=>keys.map(k=>`"${String(x[k]??"").replace(/"/g,'""')}"`).join(","))].join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="patient_safety_incidents_"+today()+".csv";a.click();URL.revokeObjectURL(a.href);
+}
+
+function toggleLang(){lang=lang==="km"?"en":"km";document.documentElement.lang=lang;$("langBtn").textContent=lang==="km"?"English":"ខ្មែរ";applyLang();renderDashboard();}
+function applyLang(){
+  document.querySelectorAll("[data-km]").forEach(el=>el.textContent=lang==="km"?el.dataset.km:el.dataset.en);
+  $("appTitle").textContent=lang==="km"?"ប្រព័ន្ធរាយការណ៍ហេតុការណ៍សុវត្ថិភាពអ្នកជំងឺ":"Patient Safety Incident Reporting Tool";
+  $("tabForm").textContent=lang==="km"?"រាយការណ៍":"Report";$("tabDash").textContent=lang==="km"?"ផ្ទាំងគ្រប់គ្រង":"Dashboard";
+}
+function t(km,en){return lang==="km"?km:en}
+
+$("incidentDate").value=today();
+$("fromDate").value=new Date(new Date().setDate(new Date().getDate()-30)).toISOString().slice(0,10);
+$("toDate").value=today();
+applyLang();renderDashboard();syncQueue();
+
+/* Load SheetJS only when online; CSV export remains available without it. */
+(function(){
+  const s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+  s.async=true;document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
